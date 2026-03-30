@@ -208,14 +208,28 @@ export default function NotificationManager() {
 
     // Native notification
     if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
-      try {
-        new Notification(`${r.emoji} ${r.label}`, {
-          body: r.message,
-          icon: '/favicon.ico',
-          tag: r.id,
-        });
-      } catch {
-        // silently fail (e.g. in sandboxed env)
+      const showFallback = () => {
+        try {
+          new Notification(`${r.emoji} ${r.label}`, {
+            body: r.message,
+            icon: '/pwa-192x192.svg',
+            tag: r.id,
+          });
+        } catch {
+          // silently fail (e.g. in sandboxed env)
+        }
+      };
+
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.ready.then((registration) => {
+          registration.showNotification(`${r.emoji} ${r.label}`, {
+            body: r.message,
+            icon: '/pwa-192x192.svg',
+            tag: r.id,
+          }).catch(() => showFallback());
+        }).catch(() => showFallback());
+      } else {
+        showFallback();
       }
     }
   }, []);
